@@ -347,7 +347,7 @@ enum channel_status channel_select(select_t* channel_list, size_t channel_count,
 
         for (int i = 0; i < channel_count; ++i) {
             if(channel_list[i].dir == SEND){
-                enum channel_status s = channel_non_blocking_send_critical(channel_list[i].channel, channel_list[i].data);
+                enum channel_status s = channel_non_blocking_send(channel_list[i].channel, channel_list[i].data);
                 //printf("thread %lx: send to channel %d, %d\n", pthread_self(), i, s);
                 //fflush(stdout);
                 //enum channel_status s = channel_non_blocking_send(channel_list[i].channel, channel_list[i].data);
@@ -360,7 +360,7 @@ enum channel_status channel_select(select_t* channel_list, size_t channel_count,
                     return s;
                 }
             }else{
-                enum channel_status s = channel_non_blocking_receive_critical(channel_list[i].channel, &(channel_list[i].data));
+                enum channel_status s = channel_non_blocking_receive(channel_list[i].channel, &(channel_list[i].data));
                 //printf("thread %lx: recv from channel %d, %d\n", pthread_self(), i, s);
                 //fflush(stdout);
                 //enum channel_status s = channel_non_blocking_receive(channel_list[i].channel, &(channel_list[i].data));
