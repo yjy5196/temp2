@@ -13,23 +13,32 @@
 
 // Defines possible return values from channel functions
 enum channel_status {
-    CHANNEL_EMPTY = 0,  // Channel is empty in non-blocking operation
-    CHANNEL_FULL = 0,   // Channel is full in non-blocking operation
-    SUCCESS = 1,        // Operation successful
-    GENERIC_ERROR = -1, // Generic error
-    GEN_ERROR = -1,     // Unused: for instructor testing
-    CLOSED_ERROR = -2,  // Channel has been closed
-    DESTROY_ERROR = -3  // Error during destroy
+    CHANNEL_EMPTY = 2,
+    CHANNEL_FULL = 0,
+    SUCCESS = 1,
+    CLOSED_ERROR = -2,
+    GENERIC_ERROR = -1,
+    DESTROY_ERROR = -3,
+    OPEN = 3
 };
 
 // Defines channel object
 typedef struct {
     // DO NOT REMOVE buffer (OR CHANGE ITS NAME) FROM THE STRUCT
-    // YOU MUST USE buffer TO STORE YOUR CHANNEL MESSAGES
+    // YOU MUST USE buffer TO STORE YOUR BUFFERED CHANNEL MESSAGES
     buffer_t* buffer;
 
     /* ADD ANY STRUCT ENTRIES YOU NEED HERE */
     /* IMPLEMENT THIS */
+    size_t size;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    enum channel_status status;
+    list_t *channel_selects_send;
+    list_t *channel_selects_recvive;
+    int wait_num;
+    pthread_cond_t wait;
+    pthread_cond_t cond_user;
 } channel_t;
 
 // Defines channel list structure for channel_select function
@@ -45,9 +54,13 @@ typedef struct {
     // If dir is RECV, then the message received from the channel is stored as an output in this parameter, data
     // If dir is SEND, then the message that needs to be sent is given as input in this parameter, data
     void* data;
+
+    pthread_cond_t* cond;
+    pthread_mutex_t* mutex;
 } select_t;
 
 // Creates a new channel with the provided size and returns it to the caller
+// A 0 size indicates an unbuffered channel, whereas a positive size indicates a buffered channel
 channel_t* channel_create(size_t size);
 
 // Writes data to the given channel
@@ -55,7 +68,7 @@ channel_t* channel_create(size_t size);
 // In case the channel is full, the function waits till the channel has space to write the new data
 // Returns SUCCESS for successfully writing data to the channel,
 // CLOSED_ERROR if the channel is closed, and
-// GENERIC_ERROR on encountering any other generic error of any sort
+// GEN_ERROR on encountering any other generic error of any sort
 enum channel_status channel_send(channel_t* channel, void* data);
 
 // Reads data from the given channel and stores it in the function's input parameter, data (Note that it is a double pointer)
@@ -63,7 +76,7 @@ enum channel_status channel_send(channel_t* channel, void* data);
 // In case the channel is empty, the function waits till the channel has some data to read
 // Returns SUCCESS for successful retrieval of data,
 // CLOSED_ERROR if the channel is closed, and
-// GENERIC_ERROR on encountering any other generic error of any sort
+// GEN_ERROR on encountering any other generic error of any sort
 enum channel_status channel_receive(channel_t* channel, void** data);
 
 // Writes data to the given channel
@@ -71,7 +84,7 @@ enum channel_status channel_receive(channel_t* channel, void** data);
 // Returns SUCCESS for successfully writing data to the channel,
 // CHANNEL_FULL if the channel is full and the data was not added to the buffer,
 // CLOSED_ERROR if the channel is closed, and
-// GENERIC_ERROR on encountering any other generic error of any sort
+// GEN_ERROR on encountering any other generic error of any sort
 enum channel_status channel_non_blocking_send(channel_t* channel, void* data);
 
 // Reads data from the given channel and stores it in the function's input parameter data (Note that it is a double pointer)
@@ -79,21 +92,21 @@ enum channel_status channel_non_blocking_send(channel_t* channel, void* data);
 // Returns SUCCESS for successful retrieval of data,
 // CHANNEL_EMPTY if the channel is empty and nothing was stored in data,
 // CLOSED_ERROR if the channel is closed, and
-// GENERIC_ERROR on encountering any other generic error of any sort
+// GEN_ERROR on encountering any other generic error of any sort
 enum channel_status channel_non_blocking_receive(channel_t* channel, void** data);
 
 // Closes the channel and informs all the blocking send/receive/select calls to return with CLOSED_ERROR
 // Once the channel is closed, send/receive/select operations will cease to function and just return CLOSED_ERROR
 // Returns SUCCESS if close is successful,
 // CLOSED_ERROR if the channel is already closed, and
-// GENERIC_ERROR in any other error case
+// GEN_ERROR in any other error case
 enum channel_status channel_close(channel_t* channel);
 
 // Frees all the memory allocated to the channel
 // The caller is responsible for calling channel_close and waiting for all threads to finish their tasks before calling channel_destroy
 // Returns SUCCESS if destroy is successful,
 // DESTROY_ERROR if channel_destroy is called on an open channel, and
-// GENERIC_ERROR in any other error case
+// GEN_ERROR in any other error case
 enum channel_status channel_destroy(channel_t* channel);
 
 // Takes an array of channels (channel_list) of type select_t and the array length (channel_count) as inputs

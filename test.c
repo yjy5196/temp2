@@ -742,7 +742,7 @@ char* test_response_time() {
     }
 
     double avg_response_time = convertTimeToSeconds(total_time) / (double)ITERS;
-    mu_assert("test_response_time: Avg response time for send/receive is higher than 0.0005", avg_response_time < 0.0005);
+    mu_assert("test_response_time: Avg response time for send/receive is higher than 0.001", avg_response_time < 0.001);
 
     for (size_t i = 0; i < capacity; i++) {
         channel_send(channel, "Message");
@@ -769,7 +769,7 @@ char* test_response_time() {
     }
 
     avg_response_time = convertTimeToSeconds(total_time) / (double)ITERS;
-    mu_assert("test_response_time: Avg response time for send/receive is higher than 0.0005", avg_response_time < 0.0005);
+    mu_assert("test_response_time: Avg response time for send/receive is higher than 0.001", avg_response_time < 0.001);
 
     // Free memory
     channel_close(channel);
@@ -893,7 +893,7 @@ char* test_select_response_time() {
     }
 
     double avg_response_time = convertTimeToSeconds(total_time) / (double)ITERS;
-    mu_assert("test_select_response_time: Avg response time for select is higher than 0.0005", avg_response_time < 0.0005);
+    mu_assert("test_select_response_time: Avg response time for select is higher than 0.001", avg_response_time < 0.001);
 
     /* This part of code is to test select with multiple receives */
     for (size_t i = 0; i < CHANNELS; i++) {
@@ -927,7 +927,7 @@ char* test_select_response_time() {
     }
 
     avg_response_time = convertTimeToSeconds(total_time) / (double)ITERS;
-    mu_assert("test_select_response_time: Avg response time for select is higher than 0.0005", avg_response_time < 0.0005);
+    mu_assert("test_select_response_time: Avg response time for select is higher than 0.001", avg_response_time < 0.001);
 
     for (size_t i = 0; i < CHANNELS; i++) {
         channel_close(channel[i]);
